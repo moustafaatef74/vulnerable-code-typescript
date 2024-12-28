@@ -31,11 +31,14 @@ jobs:
       with:
         fetch-depth: 0  # Fetch all history for all branches and tags
 
-    - uses: gitleaks/gitleaks-action@v2
-      continue-on-error: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
-        GITLEAKS_CONFIG: gitleaks.toml
+
+    - name: Install gitleaks
+      run: |
+        git clone https://github.com/gitleaks/gitleaks.git
+        cd gitleaks
+        make build
+        cd ..
+        gitleaks detect --source . --no-git --report-format sarif --report-path gitleaks_report.sarif -v --config gitleaks.toml
 
     - name: Install git-secrets
       run: |
@@ -64,6 +67,7 @@ jobs:
       with: 
         base: ""
         head: ${{ github.ref_name }}
+        extra_args: --json
 
     - name: Install detect-secrets
       run: |
@@ -71,7 +75,10 @@ jobs:
 
     - name: Run detect-secrets
       continue-on-error: true
-      run: detect-secrets scan --all-plugins > detect-secrets-results.txt
+      run: |
+        ls
+        detect-secrets scan --all-plugins > secrets.json
+        cat secrets.json
 
     # - name: Install Bandit
     #   run: |
@@ -125,6 +132,39 @@ jobs:
       uses: domstolene/trivy-pr-report@main
       with:
         github_token: ${{ secrets.MY_GITHUB_TOKEN }}
+
+    - name: Post Trivy SARIF findings in the pull request
+      if: github.event_name == 'pull_request'
+      uses: sett-and-hive/sarif-to-comment-action@v2.0.1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        repository: ${{ github.repository }}
+        pr-number: ${{ github.event.pull_request.number }}
+        sarif-file: trivy-results.sarif
+        title: Trivy Output
+        dry-run: false
+        
+    - name: Post SARIF findings in the pull request
+      if: github.event_name == 'pull_request'
+      uses: sett-and-hive/sarif-to-comment-action@v2.0.1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        repository: ${{ github.repository }}
+        pr-number: ${{ github.event.pull_request.number }}
+        sarif-file: gitleaks_report.sarif
+        title: Trivy Output
+        dry-run: false
+
+    - name: Post SARIF findings in the pull request
+      if: github.event_name == 'pull_request'
+      uses: sett-and-hive/sarif-to-comment-action@v2.0.1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        repository: ${{ github.repository }}
+        pr-number: ${{ github.event.pull_request.number }}
+        sarif-file: secrets.json
+        title: Trivy Output
+        dry-run: false
 
     - name: Upload scan results
       continue-on-error: true
