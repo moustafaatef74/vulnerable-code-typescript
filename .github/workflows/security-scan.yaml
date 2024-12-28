@@ -31,11 +31,26 @@ jobs:
       with:
         fetch-depth: 0  # Fetch all history for all branches and tags
 
-    - uses: gitleaks/gitleaks-action@v2
-      continue-on-error: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
-        GITLEAKS_CONFIG: gitleaks.toml
+    - name: Install Gitleaks
+      run: |
+        # Install dependencies
+        sudo apt-get update
+        sudo apt-get install -y curl unzip jq
+
+        # Download the latest Gitleaks release
+        GITLEAKS_VERSION=$(curl -s https://api.github.com/repos/gitleaks/gitleaks/releases/latest | jq -r .tag_name)
+        curl -L https://github.com/gitleaks/gitleaks/releases/download/$GITLEAKS_VERSION/gitleaks-linux-amd64-$GITLEAKS_VERSION.zip -o gitleaks.zip
+
+        # Unzip the release
+        unzip gitleaks.zip
+
+        # Add Gitleaks to PATH
+        echo "$(pwd)" >> $GITHUB_PATH
+
+    - name: Run Gitleaks scan
+      run: |
+        gitleaks detect --source . --no-git --report-format sarif --report-path gitleaks_report.sarif -v --config gitleaks.toml
+        
 
     - name: Install git-secrets
       run: |
@@ -114,21 +129,16 @@ jobs:
       #   cache: true
       #   version: v0.57.1
 
-    - name: Run Trivy vulnerability scanner in repo mode
-      uses: aquasecurity/trivy-action@master
+    - name: Run Trivy scan
+      uses: aquasecurity/trivy-action@v0.28.0
       with:
         scan-type: 'fs'
-        ignore-unfixed: false
+        scan-ref: '.'
         format: 'sarif'
-        output: 'trivy-results.sarif'
+        output: 'trivy_report.sarif'
+        exit-code: '1'
         severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
         skip-setup-trivy: true
-
-    - name: Trivy Scan and Report to PR
-      if: github.event_name == 'pull_request'
-      uses: domstolene/trivy-pr-report@main
-      with:
-        github_token: ${{ secrets.MY_GITHUB_TOKEN }}
 
     - name: Post Trivy SARIF findings in the pull request
       if: github.event_name == 'pull_request'
@@ -137,10 +147,8 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
         repository: ${{ github.repository }}
         pr-number: ${{ github.event.pull_request.number }}
-        sarif-file: trivy-results.sarif
-        title: Trivy Output
-        dry-run: false
-        
+        sarif-file: trivy_report.sarif
+        title: Trivy Report        
 
     - name: Post git-secrets SARIF findings in the pull request
       if: github.event_name == 'pull_request'
@@ -150,8 +158,17 @@ jobs:
         repository: ${{ github.repository }}
         pr-number: ${{ github.event.pull_request.number }}
         sarif-file: secrets.json
-        title: Trivy Output
-        dry-run: false
+        title: Git Secret Report
+
+    - name: Post gitleaks SARIF findings in the pull request
+      if: github.event_name == 'pull_request'
+      uses: sett-and-hive/sarif-to-comment-action@v2.0.1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        repository: ${{ github.repository }}
+        pr-number: ${{ github.event.pull_request.number }}
+        sarif-file: gitleaks_report.sarif 
+        title: Git Leaks Report
 
     - name: Upload scan results
       continue-on-error: true
