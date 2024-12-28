@@ -119,7 +119,9 @@ jobs:
         output: 'trivy-results.sarif'
         severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
         skip-setup-trivy: true
+
     - name: Trivy Scan and Report to PR
+      if: github.event_name == 'pull_request'
       uses: domstolene/trivy-pr-report@main
       with:
         github_token: ${{ secrets.MY_GITHUB_TOKEN }}
