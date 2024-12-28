@@ -64,7 +64,7 @@ jobs:
       with: 
         base: ""
         head: ${{ github.ref_name }}
-        extra_args: --debug --only-verified ﻿
+        extra_args: "&> trufflehog-results.json"
 
     - name: Install detect-secrets
       run: |
