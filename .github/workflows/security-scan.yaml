@@ -31,14 +31,11 @@ jobs:
       with:
         fetch-depth: 0  # Fetch all history for all branches and tags
 
-
-    - name: Install gitleaks
-      run: |
-        git clone https://github.com/gitleaks/gitleaks.git
-        cd gitleaks
-        make build
-        cd ..
-        gitleaks detect --source . --no-git --report-format sarif --report-path gitleaks_report.sarif -v --config gitleaks.toml
+    - uses: gitleaks/gitleaks-action@v2
+      continue-on-error: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+        GITLEAKS_CONFIG: gitleaks.toml
 
     - name: Install git-secrets
       run: |
@@ -145,7 +142,7 @@ jobs:
         dry-run: false
         
 
-    - name: Post SARIF findings in the pull request
+    - name: Post git-secrets SARIF findings in the pull request
       if: github.event_name == 'pull_request'
       uses: sett-and-hive/sarif-to-comment-action@v2.0.1
       with:
