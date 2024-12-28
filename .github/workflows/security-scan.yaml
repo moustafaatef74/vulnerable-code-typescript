@@ -31,11 +31,12 @@ jobs:
       with:
         fetch-depth: 0  # Fetch all history for all branches and tags
 
-    - uses: gitleaks/gitleaks-action@v2
+    - name: Check for GitLeaks
       continue-on-error: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
-        GITLEAKS_CONFIG: gitleaks.toml
+      id: gitleaks
+      uses: gacts/gitleaks@v1  
+      with:
+        config-path: gitleaks.toml
 
     - name: Install git-secrets
       run: |
@@ -44,6 +45,9 @@ jobs:
         sudo make install
         cd ..
         rm -rf git-secrets
+        ls /tmp
+        mv /tmp/gitleaks.sarif gitleaks.sarif
+        cat gitleaks.sarif
 
     - name: Configure git-secrets
       run: |
@@ -64,6 +68,7 @@ jobs:
       with: 
         base: ""
         head: ${{ github.ref_name }}
+        extra_args: --json
 
     - name: Install detect-secrets
       run: |
@@ -71,7 +76,10 @@ jobs:
 
     - name: Run detect-secrets
       continue-on-error: true
-      run: detect-secrets scan --all-plugins > detect-secrets-results.txt
+      run: |
+        ls
+        detect-secrets scan . > secrets.json
+        cat secrets.json
 
     # - name: Install Bandit
     #   run: |
@@ -104,27 +112,47 @@ jobs:
     #       echo "No package.json found, skipping npm audit"
     #     fi
 
-    - name: Manual Trivy Setup
-      uses: aquasecurity/setup-trivy@v0.2.0
-      # with:
-      #   cache: true
-      #   version: v0.57.1
-
-    - name: Run Trivy vulnerability scanner in repo mode
-      uses: aquasecurity/trivy-action@master
+    - name: Run Trivy scan
+      continue-on-error: true
+      uses: aquasecurity/trivy-action@0.29.0
       with:
         scan-type: 'fs'
-        ignore-unfixed: true
+        scan-ref: '.'
         format: 'sarif'
-        output: 'trivy-results.sarif'
+        output: 'trivy_report.sarif'
+        exit-code: '1'
         severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
-        skip-setup-trivy: true
+        skip-setup-trivy: false
 
-    - name: Trivy Scan and Report to PR
+    - name: Post Trivy SARIF findings in the pull request
       if: github.event_name == 'pull_request'
-      uses: domstolene/trivy-pr-report@main
+      uses: sett-and-hive/sarif-to-comment-action@v2.0.1
       with:
-        github_token: ${{ secrets.MY_GITHUB_TOKEN }}
+        token: ${{ secrets.GITHUB_TOKEN }}
+        repository: ${{ github.repository }}
+        pr-number: ${{ github.event.pull_request.number }}
+        sarif-file: trivy_report.sarif
+        title: Trivy Report        
+
+    - name: Post gitleaks SARIF findings in the pull request
+      if: github.event_name == 'pull_request'
+      uses: sett-and-hive/sarif-to-comment-action@v2.0.1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        repository: ${{ github.repository }}
+        pr-number: ${{ github.event.pull_request.number }}
+        sarif-file: gitleaks.sarif
+        title: Git Leaks Report
+
+    # - name: Post git-secrets SARIF findings in the pull request
+    #   if: github.event_name == 'pull_request'
+    #   uses: sett-and-hive/sarif-to-comment-action@v2.0.1
+    #   with:
+    #     token: ${{ secrets.GITHUB_TOKEN }}
+    #     repository: ${{ github.repository }}
+    #     pr-number: ${{ github.event.pull_request.number }}
+    #     sarif-file: secrets.json
+    #     title: Git Secret Report
 
     - name: Upload scan results
       continue-on-error: true
