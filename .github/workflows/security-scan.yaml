@@ -34,10 +34,22 @@ jobs:
 
     - name: Install gitleaks
       run: |
-        git clone https://github.com/gitleaks/gitleaks.git
-        cd gitleaks
-        make build
-        cd ..
+        # Install dependencies
+        sudo apt-get update
+        sudo apt-get install -y curl unzip jq
+
+        # Download the latest gitleaks release
+        GITLEAKS_VERSION=$(curl -s https://api.github.com/repos/gitleaks/gitleaks/releases/latest | jq -r .tag_name)
+        curl -L https://github.com/gitleaks/gitleaks/releases/download/$GITLEAKS_VERSION/gitleaks-linux-amd64-$GITLEAKS_VERSION.zip -o gitleaks.zip
+
+        # Unzip the release
+        unzip gitleaks.zip
+
+        # Add gitleaks to PATH
+        echo "$(pwd)" >> $GITHUB_PATH
+
+    - name: Run gitleaks scan
+      run: |
         gitleaks detect --source . --no-git --report-format sarif --report-path gitleaks_report.sarif -v --config gitleaks.toml
 
     - name: Install git-secrets
