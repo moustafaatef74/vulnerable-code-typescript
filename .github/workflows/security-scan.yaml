@@ -124,7 +124,7 @@ jobs:
     #     fi
 
     - name: Run Trivy scan
-      uses: aquasecurity/trivy-action@main
+      uses: aquasecurity/trivy-action@0.29.0
       with:
         scan-type: 'fs'
         scan-ref: '.'
