@@ -33,7 +33,9 @@ jobs:
 
     - name: Check for GitLeaks
       id: gitleaks
-      uses: gacts/gitleaks@v1   
+      uses: gacts/gitleaks@v1  
+      with:
+        config-path: gitleaks.toml 
 
     - name: Install git-secrets
       run: |
