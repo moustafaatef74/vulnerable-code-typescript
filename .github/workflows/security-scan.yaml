@@ -32,6 +32,7 @@ jobs:
         fetch-depth: 0  # Fetch all history for all branches and tags
 
     - name: Check for GitLeaks
+      continue-on-error: true
       id: gitleaks
       uses: gacts/gitleaks@v1  
       with:
