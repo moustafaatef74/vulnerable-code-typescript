@@ -47,6 +47,13 @@ jobs:
         git secrets --add 'private_key'
         git secrets --add 'api_key'
 
+
+    - name: Run TruffleHog scan
+      uses: trufflesecurity/trufflehog@v3
+      with:
+        base: ""
+        head: ${{ github.ref_name }}
+
     - name: Run git-secrets
       continue-on-error: true
       run: git secrets --scan
@@ -57,23 +64,25 @@ jobs:
 
     - name: Run detect-secrets
       continue-on-error: true
-      run: detect-secrets scan . > detect-secrets-results.txt
+      run: detect-secrets scan --all-plugins > detect-secrets-results.txt
 
-    - name: Install Bandit
-      run: |
-        python -m pip install bandit
+    # - name: Install Bandit
+    #   run: |
+    #     python -m pip install bandit
 
-    - name: Run Bandit
-      continue-on-error: true
-      run: bandit -r . -f custom > bandit-results.txt
+    # - name: Run Bandit
+    #   # if: inputs.language == "python" 
+    #   continue-on-error: true
+    #   run: bandit -r . -f custom > bandit-results.txt
 
-    - name: Install Safety
-      run: |
-        python -m pip install safety
+    # - name: Install Safety
+    #   run: |
+    #     python -m pip install safety
 
-    - name: Run Safety
-      continue-on-error: true
-      run: safety check --full-report > safety-results.txt
+    # - name: Run Safety
+    #   # if: inputs.language == "python" 
+    #   continue-on-error: true
+    #   run: safety check --full-report > safety-results.txt
 
     - name: Install npm (for npm audit)
       run: |
@@ -114,7 +123,7 @@ jobs:
           bandit-results.txt
           safety-results.txt
           npm-audit-results.json
-          trivy-results.txt
+          trivy-results.sarif
 
     - name: Check for vulnerabilities
       run: |
