@@ -64,7 +64,6 @@ jobs:
       with: 
         base: ""
         head: ${{ github.ref_name }}
-        extra_args: "&> trufflehog-results.json"
 
     - name: Install detect-secrets
       run: |
@@ -92,24 +91,24 @@ jobs:
     #   continue-on-error: true
     #   run: safety check --full-report > safety-results.txt
 
-    - name: Install npm (for npm audit)
-      run: |
-        sudo apt-get update && sudo apt-get install -y npm
+    # - name: Install npm (for npm audit)
+    #   run: |
+    #     sudo apt-get update && sudo apt-get install -y npm
 
-    - name: Run npm audit (if package.json exists)
-      continue-on-error: true
-      run: |
-        if [ -f package.json ]; then
-          npm audit --json > npm-audit-results.json
-        else
-          echo "No package.json found, skipping npm audit"
-        fi
+    # - name: Run npm audit (if package.json exists)
+    #   continue-on-error: true
+    #   run: |
+    #     if [ -f package.json ]; then
+    #       npm audit --json > npm-audit-results.json
+    #     else
+    #       echo "No package.json found, skipping npm audit"
+    #     fi
 
     - name: Manual Trivy Setup
       uses: aquasecurity/setup-trivy@v0.2.0
-      with:
-        cache: true
-        version: v0.57.1
+      # with:
+      #   cache: true
+      #   version: v0.57.1
 
     - name: Run Trivy vulnerability scanner in repo mode
       uses: aquasecurity/trivy-action@master

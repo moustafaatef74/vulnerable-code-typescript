@@ -8,6 +8,7 @@ const port = 3000;
 
 // Line 8: Insecure API endpoint with API key in URL (vulnerability)
 const API_URL = 'https://api.example.com/data?api_key=abcdefghijklmnopqrstuvwxyz123456';
+const API_URL2 = 'https://api.example.com/data?api_key=abcdefghijsddsklmnopqrstuvwxyz123456';
 
 // Line 11: Weak JWT secret (vulnerability)
 const JWT_SECRET = 'secret';
