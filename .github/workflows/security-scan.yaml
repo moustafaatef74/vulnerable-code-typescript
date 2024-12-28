@@ -64,7 +64,6 @@ jobs:
       with: 
         base: ""
         head: ${{ github.ref_name }}
-        head: HEAD 
         extra_args: --debug --only-verified ﻿
 
     - name: Install detect-secrets
