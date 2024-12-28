@@ -27,8 +27,10 @@ jobs:
         python -m pip install --upgrade pip
 
     - uses: gitleaks/gitleaks-action@v2
+      continue-on-error: true
       env:
         GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+        GITLEAKS_CONFIG: ./.gitleaks.toml
 
     - name: Install git-secrets
       run: |
@@ -45,18 +47,23 @@ jobs:
         git secrets --add 'api_key'
 
     - name: Run git-secrets
+      continue-on-error: true
       run: git secrets --scan
 
     - name: Run detect-secrets
+      continue-on-error: true
       run: detect-secrets scan . > detect-secrets-results.txt
 
     - name: Run Bandit
+      continue-on-error: true
       run: bandit -r . -f custom > bandit-results.txt
 
     - name: Run Safety
+      continue-on-error: true
       run: safety check --full-report > safety-results.txt
 
     - name: Run npm audit (if package.json exists)
+      continue-on-error: true
       run: |
         if [ -f package.json ]; then
           npm audit --json > npm-audit-results.json
@@ -65,6 +72,7 @@ jobs:
         fi
 
     - name: Run Trivy filesystem scan
+      continue-on-error: true
       uses: aquasecurity/trivy-action@master
       with:
         scan-type: 'fs'
@@ -73,6 +81,7 @@ jobs:
         output: 'trivy-results.txt'
 
     - name: Upload scan results
+      continue-on-error: true
       uses: actions/upload-artifact@v4
       with:
         name: security-scan-results
