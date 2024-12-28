@@ -36,7 +36,7 @@ jobs:
       id: gitleaks
       uses: gacts/gitleaks@v1  
       with:
-        config-path: gitleaks.toml 
+        config-path: gitleaks.toml
 
     - name: Install git-secrets
       run: |
@@ -45,6 +45,8 @@ jobs:
         sudo make install
         cd ..
         rm -rf git-secrets
+        ls /tmp
+        mv /tmp/gitleaks.sarif gitleaks.sarif
 
     - name: Configure git-secrets
       run: |
@@ -138,7 +140,7 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
         repository: ${{ github.repository }}
         pr-number: ${{ github.event.pull_request.number }}
-        sarif-file: ${{ steps.gitleaks.outputs.sarif }}	
+        sarif-file: gitleaks.sarif
         title: Git Leaks Report
 
     - name: Post git-secrets SARIF findings in the pull request
