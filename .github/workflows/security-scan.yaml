@@ -47,6 +47,7 @@ jobs:
         rm -rf git-secrets
         ls /tmp
         mv /tmp/gitleaks.sarif gitleaks.sarif
+        cat gitleaks.sarif
 
     - name: Configure git-secrets
       run: |
@@ -143,15 +144,15 @@ jobs:
         sarif-file: gitleaks.sarif
         title: Git Leaks Report
 
-    - name: Post git-secrets SARIF findings in the pull request
-      if: github.event_name == 'pull_request'
-      uses: sett-and-hive/sarif-to-comment-action@v2.0.1
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        repository: ${{ github.repository }}
-        pr-number: ${{ github.event.pull_request.number }}
-        sarif-file: secrets.json
-        title: Git Secret Report
+    # - name: Post git-secrets SARIF findings in the pull request
+    #   if: github.event_name == 'pull_request'
+    #   uses: sett-and-hive/sarif-to-comment-action@v2.0.1
+    #   with:
+    #     token: ${{ secrets.GITHUB_TOKEN }}
+    #     repository: ${{ github.repository }}
+    #     pr-number: ${{ github.event.pull_request.number }}
+    #     sarif-file: secrets.json
+    #     title: Git Secret Report
 
     - name: Upload scan results
       continue-on-error: true
