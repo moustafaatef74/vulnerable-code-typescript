@@ -119,6 +119,10 @@ jobs:
         output: 'trivy-results.sarif'
         severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
         skip-setup-trivy: true
+    - name: Trivy Scan and Report to PR
+      uses: domstolene/trivy-pr-report@main
+      with:
+        github_token: ${{ secrets.MY_GITHUB_TOKEN }}
 
     - name: Upload scan results
       continue-on-error: true
