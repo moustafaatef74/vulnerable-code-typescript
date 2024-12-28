@@ -27,11 +27,6 @@ jobs:
       with:
         fetch-depth: 0  # Fetch all history for all branches and tags
 
-    - name: Install gitleaks
-      run: |
-        curl -sSL https://github.com/zricethezav/gitleaks/releases/latest/download/gitleaks-linux-amd64.tar.gz | tar -xz
-        sudo mv gitleaks /usr/local/bin/
-
     - uses: gitleaks/gitleaks-action@v2
       continue-on-error: true
       env:
